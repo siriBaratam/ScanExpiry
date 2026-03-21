@@ -11,14 +11,31 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { name, category, expiry_date, purchase_date } = req.body;
-  if (!name || !category || !expiry_date) {
-    return res.status(400).json({ error: 'Name, category, and expiry_date are required' });
+  const { name, category, expiry_date, purchase_date, manufacture_date, best_before_date } = req.body;
+  if (!name || !category) {
+    return res.status(400).json({ error: 'Name and category are required' });
+  }
+
+  let finalExpiryDate = expiry_date;
+  let finalPurchaseDate = purchase_date || manufacture_date;
+
+  if (!expiry_date) {
+    if (!manufacture_date || !best_before_date) {
+      return res.status(400).json({ error: 'Either expiry_date or both manufacture_date and best_before_date are required' });
+    }
+    // Validate best_before_date > manufacture_date
+    const manufacture = new Date(manufacture_date);
+    const bestBefore = new Date(best_before_date);
+    if (bestBefore <= manufacture) {
+      return res.status(400).json({ error: 'Best Before Date must be after Manufacture Date' });
+    }
+    finalExpiryDate = best_before_date;
+    finalPurchaseDate = manufacture_date;
   }
 
   const { rows } = await query(
     'INSERT INTO products (name, category, expiry_date, purchase_date, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-    [name, category, expiry_date, purchase_date || null, req.user.id]
+    [name, category, finalExpiryDate, finalPurchaseDate || null, req.user.id]
   );
 
   res.status(201).json(rows[0]);

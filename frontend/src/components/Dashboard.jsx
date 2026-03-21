@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { productsApi } from "../api/client";
+import AddProductForm from "./AddProductForm";
 
 function StatCard({ icon, label, value, color }) {
   return (
@@ -129,6 +130,7 @@ function SimplePieChart({ data, title }) {
 function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [stats, setStats] = useState({
     freshProducts: 0,
     expiringSoon: 0,
@@ -136,39 +138,39 @@ function Dashboard() {
     wastageValue: "$0",
   });
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const data = await productsApi.getAll();
-        setProducts(data);
+  const loadProducts = async () => {
+    try {
+      const data = await productsApi.getAll();
+      setProducts(data);
 
-        const today = new Date();
-        let fresh = 0,
-          soon = 0,
-          expired = 0;
+      const today = new Date();
+      let fresh = 0,
+        soon = 0,
+        expired = 0;
 
-        data.forEach((p) => {
-          const expiry = new Date(p.expiry_date);
-          const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      data.forEach((p) => {
+        const expiry = new Date(p.expiry_date);
+        const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-          if (daysLeft <= 0) expired++;
-          else if (daysLeft <= 7) soon++;
-          else fresh++;
-        });
+        if (daysLeft <= 0) expired++;
+        else if (daysLeft <= 7) soon++;
+        else fresh++;
+      });
 
-        setStats({
-          freshProducts: fresh,
-          expiringSoon: soon,
-          expired: expired,
-          wastageValue: "$342",
-        });
-      } catch (err) {
-        console.error("Failed to load products:", err);
-      } finally {
-        setLoading(false);
-      }
+      setStats({
+        freshProducts: fresh,
+        expiringSoon: soon,
+        expired: expired,
+        wastageValue: "$342",
+      });
+    } catch (err) {
+      console.error("Failed to load products:", err);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     loadProducts();
   }, []);
 
@@ -255,7 +257,10 @@ function Dashboard() {
           <p className="text-xs text-slate-500 my-2">
             Add product details manually
           </p>
-          <button className="w-full bg-slate-600 text-white py-2 rounded font-semibold text-sm hover:bg-slate-700">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="w-full bg-slate-600 text-white py-2 rounded font-semibold text-sm hover:bg-slate-700"
+          >
             Add Product
           </button>
         </div>
@@ -346,6 +351,14 @@ function Dashboard() {
           📥 Export Report
         </button>
       </div>
+
+      {/* Add Product Modal */}
+      {showAddForm && (
+        <AddProductForm
+          onClose={() => setShowAddForm(false)}
+          onProductAdded={loadProducts}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import ResetPasswordForm from "./components/ResetPasswordForm";
 import Dashboard from "./components/Dashboard";
+import ProductList from "./components/ProductList";
 
 function AuthLayout({ children, title }) {
   return (
@@ -178,12 +179,10 @@ function Scan() {
   );
 }
 
-function ProductList() {
+function ProductListPage() {
   return (
     <MainLayout>
-      <div className="p-4 bg-white rounded-lg shadow">
-        Product list with search/filter and color-coded expiry statuses
-      </div>
+      <ProductList />
     </MainLayout>
   );
 }
@@ -225,7 +224,7 @@ function App() {
         path="/products"
         element={
           <ProtectedRoute>
-            <ProductList />
+            <ProductListPage />
           </ProtectedRoute>
         }
       />
