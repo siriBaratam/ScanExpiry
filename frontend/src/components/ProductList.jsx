@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { productsApi } from "../api/client";
 import AddProductForm from "./AddProductForm";
+import ScanProduct from "./ScanProduct";
 
 function ProductCard({ product }) {
   const today = new Date();
@@ -43,6 +44,7 @@ function ProductList() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showScanForm, setShowScanForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -137,12 +139,20 @@ function ProductList() {
               <option value="expired">Expired</option>
             </select>
           </div>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
-          >
-            + Add Product
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowScanForm(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap"
+            >
+              📷 Scan Product
+            </button>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+            >
+              + Add Product
+            </button>
+          </div>
         </div>
       </div>
 
@@ -168,6 +178,14 @@ function ProductList() {
       {showAddForm && (
         <AddProductForm
           onClose={() => setShowAddForm(false)}
+          onProductAdded={loadProducts}
+        />
+      )}
+
+      {/* Scan Product Modal */}
+      {showScanForm && (
+        <ScanProduct
+          onClose={() => setShowScanForm(false)}
           onProductAdded={loadProducts}
         />
       )}

@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { productsApi } from "../api/client";
 
-function AddProductForm({ onClose, onProductAdded }) {
+function AddProductForm({
+  onClose,
+  onProductAdded,
+  initialData = {},
+  isFromScan = false,
+}) {
   const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    expiry_date: "",
-    manufacture_date: "",
-    best_before_date: "",
+    name: initialData.name || "",
+    category: initialData.category || "",
+    expiry_date: initialData.expiry_date || "",
+    manufacture_date: initialData.manufacture_date || "",
+    best_before_date: initialData.best_before_date || "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -100,7 +105,15 @@ function AddProductForm({ onClose, onProductAdded }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">Add New Product</h2>
+          <h2 className="text-xl font-bold mb-4">
+            {isFromScan ? "Review Scanned Product" : "Add New Product"}
+          </h2>
+          {isFromScan && (
+            <p className="text-sm text-gray-600 mb-4">
+              We've extracted details from your scan. Please review and edit as
+              needed.
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

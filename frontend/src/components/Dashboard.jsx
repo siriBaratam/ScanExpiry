@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { productsApi } from "../api/client";
 import AddProductForm from "./AddProductForm";
+import ScanProduct from "./ScanProduct";
 
 function StatCard({ icon, label, value, color }) {
   return (
@@ -131,6 +132,7 @@ function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showScanForm, setShowScanForm] = useState(false);
   const [stats, setStats] = useState({
     freshProducts: 0,
     expiringSoon: 0,
@@ -247,7 +249,10 @@ function Dashboard() {
           <p className="text-xs text-slate-500 my-2">
             Use camera to scan barcode or expiry date
           </p>
-          <button className="w-full bg-blue-600 text-white py-2 rounded font-semibold text-sm hover:bg-blue-700">
+          <button
+            onClick={() => setShowScanForm(true)}
+            className="w-full bg-blue-600 text-white py-2 rounded font-semibold text-sm hover:bg-blue-700"
+          >
             Start Scan
           </button>
         </div>
@@ -356,6 +361,14 @@ function Dashboard() {
       {showAddForm && (
         <AddProductForm
           onClose={() => setShowAddForm(false)}
+          onProductAdded={loadProducts}
+        />
+      )}
+
+      {/* Scan Product Modal */}
+      {showScanForm && (
+        <ScanProduct
+          onClose={() => setShowScanForm(false)}
           onProductAdded={loadProducts}
         />
       )}

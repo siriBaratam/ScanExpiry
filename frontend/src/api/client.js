@@ -39,4 +39,5 @@ export const productsApi = {
   create: (data) => apiCall('/products', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiCall(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => apiCall(`/products/${id}`, { method: 'DELETE' }),
+  ocr: (imageData) => apiCall('/products/ocr', { method: 'POST', body: JSON.stringify({ image: imageData }) }),
 };
