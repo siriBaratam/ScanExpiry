@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { productsApi } from "../api/client";
 import { useTheme } from "../context/ThemeContext";
+import { useNotification } from "../context/NotificationContext";
 import { exportReport } from "../utils/reportGenerator";
+import {
+  generateAlertsFromProducts,
+  getAlertSeverity,
+  sendBrowserNotification,
+  requestNotificationPermission,
+  calculateDaysUntilExpiry,
+} from "../utils/alertGenerator";
 import AddProductForm from "./AddProductForm";
 import ScanProduct from "./ScanProduct";
 
@@ -136,7 +144,11 @@ function Dashboard() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScanForm, setShowScanForm] = useState(false);
   const [exportFormat, setExportFormat] = useState("csv");
+  const [alertTiming, setAlertTiming] = useState(7);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
+  const [generatedAlerts, setGeneratedAlerts] = useState([]);
   const { theme, setThemeMode } = useTheme();
+  const { addNotification } = useNotification();
   const [stats, setStats] = useState({
     freshProducts: 0,
     expiringSoon: 0,
@@ -169,8 +181,29 @@ function Dashboard() {
         expired: expired,
         wastageValue: "$342",
       });
+
+      // Generate alerts from products
+      const alerts = generateAlertsFromProducts(data, alertTiming);
+      setGeneratedAlerts(alerts);
+
+      // Notify about critical alerts
+      if (alerts.length > 0) {
+        const criticalAlerts = alerts.filter((a) => a.severity === "critical");
+        if (criticalAlerts.length > 0) {
+          const alertMessage = `⚠️ You have ${criticalAlerts.length} product(s) expiring soon!`;
+          addNotification(alertMessage, "critical", 6000);
+
+          // Send browser notifications if enabled
+          if (pushNotificationsEnabled) {
+            criticalAlerts.slice(0, 3).forEach((alert) => {
+              sendBrowserNotification(alert.title);
+            });
+          }
+        }
+      }
     } catch (err) {
       console.error("Failed to load products:", err);
+      addNotification("Error loading products", "critical");
     } finally {
       setLoading(false);
     }
@@ -178,7 +211,21 @@ function Dashboard() {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [alertTiming]);
+
+  // Request notification permission
+  useEffect(() => {
+    if (pushNotificationsEnabled) {
+      requestNotificationPermission().then((granted) => {
+        if (granted) {
+          addNotification("✅ Push notifications enabled", "success", 3000);
+        } else {
+          setPushNotificationsEnabled(false);
+          addNotification("❌ Failed to enable notifications", "warning", 3000);
+        }
+      });
+    }
+  }, [pushNotificationsEnabled]);
 
   const recentProducts = products.slice(0, 3);
 
@@ -277,23 +324,22 @@ function Dashboard() {
 
       {/* Alerts */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-        <h2 className="font-semibold text-sm mb-3 dark:text-white">🔔 Expiry Alerts</h2>
+        <h2 className="font-semibold text-sm mb-3 dark:text-white">🔔 Expiry Alerts ({generatedAlerts.length})</h2>
         <div className="space-y-2">
-          <AlertItem
-            severity="critical"
-            title="Milk expires today"
-            time="8:30 AM today"
-          />
-          <AlertItem
-            severity="warning"
-            title="Bread expires tomorrow"
-            time="3:45 PM today"
-          />
-          <AlertItem
-            severity="warning"
-            title="Yogurt expires in 2 days"
-            time="12:00 PM today"
-          />
+          {generatedAlerts.length > 0 ? (
+            generatedAlerts.slice(0, 5).map((alert) => (
+              <AlertItem
+                key={alert.id}
+                severity={alert.severity}
+                title={alert.title}
+                time={`${alert.daysLeft} days left`}
+              />
+            ))
+          ) : (
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
+              ✅ All products are fresh! No alerts at this time.
+            </p>
+          )}
         </div>
       </div>
 
@@ -303,10 +349,14 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm dark:text-white">Alert Timing</span>
-            <select className="text-xs border dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded px-2 py-1">
-              <option>1 day before</option>
-              <option>3 days before</option>
-              <option>7 days before</option>
+            <select
+              value={alertTiming}
+              onChange={(e) => setAlertTiming(parseInt(e.target.value))}
+              className="text-xs border dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded px-2 py-1"
+            >
+              <option value={1}>1 day before</option>
+              <option value={3}>3 days before</option>
+              <option value={7}>7 days before</option>
             </select>
           </div>
           <div className="flex items-center justify-between">
@@ -323,7 +373,12 @@ function Dashboard() {
           <div className="flex items-center justify-between">
             <span className="text-sm dark:text-white">Push Notifications</span>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
+              <input
+                type="checkbox"
+                checked={pushNotificationsEnabled}
+                onChange={(e) => setPushNotificationsEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
               <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600" />
             </label>
           </div>
