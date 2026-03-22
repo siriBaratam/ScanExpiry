@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { productsApi } from "../api/client";
+import { useTheme } from "../context/ThemeContext";
+import { exportReport } from "../utils/reportGenerator";
 import AddProductForm from "./AddProductForm";
 import ScanProduct from "./ScanProduct";
 
 function StatCard({ icon, label, value, color }) {
   return (
-    <div className="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 flex items-center gap-3">
       <div className={`text-3xl ${color}`}>{icon}</div>
       <div>
-        <p className="text-xs text-slate-500 uppercase">{label}</p>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">{label}</p>
+        <p className="text-2xl font-bold dark:text-white">{value}</p>
       </div>
     </div>
   );
@@ -17,9 +19,9 @@ function StatCard({ icon, label, value, color }) {
 
 function AlertItem({ severity, title, time }) {
   const severityColors = {
-    critical: "bg-red-50 border-red-200 text-red-700",
-    warning: "bg-yellow-50 border-yellow-200 text-yellow-700",
-    info: "bg-blue-50 border-blue-200 text-blue-700",
+    critical: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300",
+    warning: "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300",
+    info: "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300",
   };
   const severityIcons = {
     critical: "🔴",
@@ -34,8 +36,8 @@ function AlertItem({ severity, title, time }) {
       <div className="flex items-start gap-2">
         <span className="text-lg">{severityIcons[severity]}</span>
         <div className="flex-1">
-          <p className="font-semibold text-sm">{title}</p>
-          <p className="text-xs opacity-75">{time}</p>
+          <p className="font-semibold text-sm dark:text-white">{title}</p>
+          <p className="text-xs opacity-75 dark:text-slate-300">{time}</p>
         </div>
       </div>
     </div>
@@ -47,26 +49,26 @@ function ProductCard({ product }) {
   const expiry = new Date(product.expiry_date);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-  let statusColor = "bg-green-100 text-green-800";
+  let statusColor = "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300";
   let statusText = "Fresh";
 
   if (daysLeft <= 0) {
-    statusColor = "bg-red-100 text-red-800";
+    statusColor = "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300";
     statusText = "Expired";
   } else if (daysLeft <= 3) {
-    statusColor = "bg-red-100 text-red-800";
+    statusColor = "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300";
     statusText = "Expiring Soon";
   } else if (daysLeft <= 7) {
-    statusColor = "bg-yellow-100 text-yellow-800";
+    statusColor = "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300";
     statusText = "Expires Soon";
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-3 flex items-center justify-between">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-3 flex items-center justify-between">
       <div className="flex-1">
-        <p className="font-semibold text-sm">{product.name}</p>
-        <p className="text-xs text-slate-500">{product.category}</p>
-        <p className="text-xs text-slate-600 mt-1">
+        <p className="font-semibold text-sm dark:text-white">{product.name}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{product.category}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
           {new Date(product.expiry_date).toLocaleDateString()}
         </p>
       </div>
@@ -83,19 +85,19 @@ function SimpleBarChart({ data, title }) {
   const maxValue = Math.max(...data.map((d) => d.value));
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="font-semibold text-sm mb-4">{title}</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+      <h3 className="font-semibold text-sm mb-4 dark:text-white">{title}</h3>
       <div className="space-y-3">
         {data.map((item, idx) => (
           <div key={idx}>
-            <p className="text-xs text-slate-600 mb-1">{item.label}</p>
-            <div className="bg-slate-100 rounded-full h-2 overflow-hidden">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">{item.label}</p>
+            <div className="bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
               <div
                 className="bg-green-500 h-full transition-all"
                 style={{ width: `${(item.value / maxValue) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-slate-600 mt-1">{item.value} units</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{item.value} units</p>
           </div>
         ))}
       </div>
@@ -108,8 +110,8 @@ function SimplePieChart({ data, title }) {
   const colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="font-semibold text-sm mb-4">{title}</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+      <h3 className="font-semibold text-sm mb-4 dark:text-white">{title}</h3>
       <div className="space-y-3">
         {data.map((item, idx) => (
           <div key={idx} className="flex items-center gap-2">
@@ -117,8 +119,8 @@ function SimplePieChart({ data, title }) {
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: colors[idx % colors.length] }}
             />
-            <p className="text-xs text-slate-600 flex-1">{item.label}</p>
-            <p className="text-xs font-semibold">
+            <p className="text-xs text-slate-600 dark:text-slate-400 flex-1">{item.label}</p>
+            <p className="text-xs font-semibold dark:text-white">
               {Math.round((item.value / total) * 100)}%
             </p>
           </div>
@@ -133,6 +135,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScanForm, setShowScanForm] = useState(false);
+  const [exportFormat, setExportFormat] = useState("csv");
+  const { theme, setThemeMode } = useTheme();
   const [stats, setStats] = useState({
     freshProducts: 0,
     expiringSoon: 0,
@@ -197,18 +201,18 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-slate-600">Loading dashboard...</p>
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
+        <p className="text-slate-600 dark:text-slate-300">Loading dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="space-y-4 pb-6 bg-white dark:bg-slate-900 min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-lg p-4">
+      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 dark:from-indigo-900 dark:to-indigo-950 text-white rounded-lg p-4">
         <h1 className="text-2xl font-bold">Dashboard Overview</h1>
-        <p className="text-indigo-100 text-sm">
+        <p className="text-indigo-100 dark:text-indigo-200 text-sm">
           Monitor your product expiry dates and reduce food waste
         </p>
       </div>
@@ -243,28 +247,28 @@ function Dashboard() {
 
       {/* Product Scan & Entry */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 text-center">
           <div className="text-4xl mb-2">📷</div>
-          <h3 className="font-semibold text-sm">Scan Product</h3>
-          <p className="text-xs text-slate-500 my-2">
+          <h3 className="font-semibold text-sm dark:text-white">Scan Product</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 my-2">
             Use camera to scan barcode or expiry date
           </p>
           <button
             onClick={() => setShowScanForm(true)}
-            className="w-full bg-blue-600 text-white py-2 rounded font-semibold text-sm hover:bg-blue-700"
+            className="w-full bg-blue-600 dark:bg-blue-700 text-white py-2 rounded font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-800"
           >
             Start Scan
           </button>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 text-center">
           <div className="text-4xl mb-2">✏️</div>
-          <h3 className="font-semibold text-sm">Manual Entry</h3>
-          <p className="text-xs text-slate-500 my-2">
+          <h3 className="font-semibold text-sm dark:text-white">Manual Entry</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 my-2">
             Add product details manually
           </p>
           <button
             onClick={() => setShowAddForm(true)}
-            className="w-full bg-slate-600 text-white py-2 rounded font-semibold text-sm hover:bg-slate-700"
+            className="w-full bg-slate-600 dark:bg-slate-700 text-white py-2 rounded font-semibold text-sm hover:bg-slate-700 dark:hover:bg-slate-600"
           >
             Add Product
           </button>
@@ -272,8 +276,8 @@ function Dashboard() {
       </div>
 
       {/* Alerts */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-semibold text-sm mb-3">🔔 Expiry Alerts</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <h2 className="font-semibold text-sm mb-3 dark:text-white">🔔 Expiry Alerts</h2>
         <div className="space-y-2">
           <AlertItem
             severity="critical"
@@ -294,39 +298,43 @@ function Dashboard() {
       </div>
 
       {/* Quick Settings */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-semibold text-sm mb-3">⚙️ Quick Settings</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <h2 className="font-semibold text-sm mb-3 dark:text-white">⚙️ Quick Settings</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Alert Timing</span>
-            <select className="text-xs border rounded px-2 py-1">
+            <span className="text-sm dark:text-white">Alert Timing</span>
+            <select className="text-xs border dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded px-2 py-1">
               <option>1 day before</option>
               <option>3 days before</option>
               <option>7 days before</option>
             </select>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Theme</span>
-            <select className="text-xs border rounded px-2 py-1">
-              <option>Light</option>
-              <option>Dark</option>
+            <span className="text-sm dark:text-white">Theme</span>
+            <select
+              value={theme}
+              onChange={(e) => setThemeMode(e.target.value)}
+              className="text-xs border dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded px-2 py-1"
+            >
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
             </select>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Push Notifications</span>
+            <span className="text-sm dark:text-white">Push Notifications</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600" />
+              <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600" />
             </label>
           </div>
         </div>
       </div>
 
       {/* Recent Products */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="font-semibold text-sm">📦 Recent Products</h2>
-          <a href="/products" className="text-xs text-blue-600 hover:underline">
+          <h2 className="font-semibold text-sm dark:text-white">📦 Recent Products</h2>
+          <a href="/products" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
             View All
           </a>
         </div>
@@ -334,7 +342,7 @@ function Dashboard() {
           {recentProducts.length > 0 ? (
             recentProducts.map((p) => <ProductCard key={p.id} product={p} />)
           ) : (
-            <p className="text-xs text-slate-500 text-center py-4">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-4">
               No products yet. Start by scanning or adding one!
             </p>
           )}
@@ -352,9 +360,39 @@ function Dashboard() {
 
       {/* Export Report Button */}
       <div className="text-center">
-        <button className="bg-blue-600 text-white px-6 py-2 rounded font-semibold text-sm hover:bg-blue-700">
-          📥 Export Report
-        </button>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <select
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value)}
+            className="text-xs border dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded px-3 py-2 bg-white"
+          >
+            <option value="csv">Export as CSV</option>
+            <option value="pdf">Export as PDF</option>
+          </select>
+          <button
+            onClick={async () => {
+              const wastageData = [
+                { label: "Jan", value: 50 },
+                { label: "Feb", value: 75 },
+                { label: "Mar", value: 120 },
+                { label: "Apr", value: 180 },
+                { label: "May", value: 220 },
+                { label: "Jun", value: 310 },
+              ];
+              const categoryData = [
+                { label: "Dairy", value: 35 },
+                { label: "Beverages", value: 20 },
+                { label: "Meat & Poultry", value: 15 },
+                { label: "Snacks", value: 18 },
+                { label: "Vegetables", value: 12 },
+              ];
+              await exportReport(stats, products, wastageData, categoryData, exportFormat);
+            }}
+            className="bg-blue-600 dark:bg-blue-700 text-white px-6 py-2 rounded font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-800"
+          >
+            📥 Export Report
+          </button>
+        </div>
       </div>
 
       {/* Add Product Modal */}
