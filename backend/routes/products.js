@@ -78,7 +78,7 @@ router.post('/ocr', async (req, res) => {
     });
 
     // Process the image
-    const { data: { text } } = await worker.recognize(image);
+    const { data: { text, confidence } } = await worker.recognize(image);
     await worker.terminate();
 
     // Parse the text for product information
@@ -86,7 +86,8 @@ router.post('/ocr', async (req, res) => {
 
     res.json({
       text: text.trim(),
-      parsedData
+      parsedData,
+      confidence: Number.isFinite(confidence) ? Number(confidence.toFixed(2)) : null,
     });
   } catch (error) {
     console.error('OCR processing error:', error);
@@ -104,47 +105,60 @@ function parseOCRText(text) {
     best_before_date: '',
   };
 
-  // Clean and normalize text
+  // Clean text
   const cleanText = text.toLowerCase().replace(/\s+/g, ' ').trim();
 
-  // Look for expiry date patterns
-  const expiryPatterns = [
-    /exp(?:iry)?(?: date)?[:\s]*([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/i,
-    /best before[:\s]*([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/i,
-    /use by[:\s]*([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/i,
-    /([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/g
+  // Look for labelled dates first (exact keywords per request)
+  const labeledDates = [
+    { key: 'expiry_date', regex: /(?:exp(?:iry)?|expires?|valid\s+till)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
+    { key: 'manufacture_date', regex: /(?:mfg|manufacture(?:d)?(?:\s+on)?)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
+    { key: 'best_before_date', regex: /best before[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
   ];
 
-  for (const pattern of expiryPatterns) {
-    const match = cleanText.match(pattern);
-    if (match) {
-      let dateStr = match[1] || match[0];
-      // Normalize date format to YYYY-MM-DD
-      const normalizedDate = normalizeDate(dateStr);
+  for (const item of labeledDates) {
+    const match = text.match(item.regex);
+    if (match && match[1]) {
+      const normalizedDate = normalizeDate(match[1]);
       if (normalizedDate) {
-        if (cleanText.includes('best before')) {
-          data.best_before_date = normalizedDate;
-        } else {
-          data.expiry_date = normalizedDate;
-        }
+        data[item.key] = normalizedDate;
+      }
+    }
+  }
+
+  // Fallback date extraction (first valid date if expiry not found)
+  if (!data.expiry_date) {
+    const genericDatePattern = /([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/g;
+    let match;
+    while ((match = genericDatePattern.exec(text)) !== null) {
+      const normalizedDate = normalizeDate(match[1]);
+      if (normalizedDate) {
+        data.expiry_date = normalizedDate;
         break;
       }
     }
   }
 
-  // Try to extract product name (first line or prominent text)
-  const lines = text.split('\n').filter(line => line.trim().length > 2);
+  // Name guess: first non-empty line (not a date line)
+  const lines = text.split('\n').map((line) => line.trim()).filter((line) => line.length > 2);
   if (lines.length > 0) {
-    data.name = lines[0].trim();
+    data.name = lines.find((line) => !/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(line)) || lines[0];
   }
 
-  // Basic category detection
-  if (cleanText.includes('milk') || cleanText.includes('cheese') || cleanText.includes('yogurt')) {
-    data.category = 'Dairy';
-  } else if (cleanText.includes('bread') || cleanText.includes('flour')) {
-    data.category = 'Bakery';
-  } else if (cleanText.includes('soda') || cleanText.includes('juice')) {
-    data.category = 'Beverages';
+  // Expanded category detection
+  const categoryMap = [
+    { cat: 'Dairy', terms: ['milk', 'cheese', 'yogurt', 'butter'] },
+    { cat: 'Bakery', terms: ['bread', 'flour', 'cake', 'bun'] },
+    { cat: 'Beverages', terms: ['soda', 'juice', 'water', 'tea', 'coffee'] },
+    { cat: 'Meat', terms: ['chicken', 'beef', 'pork', 'fish', 'sausage'] },
+    { cat: 'Produce', terms: ['apple', 'banana', 'orange', 'tomato', 'lettuce'] },
+    { cat: 'Snacks', terms: ['chips', 'cookie', 'cracker', 'nuts'] },
+  ];
+
+  for (const item of categoryMap) {
+    if (item.terms.some((term) => cleanText.includes(term))) {
+      data.category = item.cat;
+      break;
+    }
   }
 
   return data;
@@ -153,26 +167,38 @@ function parseOCRText(text) {
 // Helper function to normalize dates
 function normalizeDate(dateStr) {
   // Handle various date formats: DD/MM/YY, MM/DD/YY, DD-MM-YYYY, etc.
-  const parts = dateStr.split(/[\/\-]/);
+  const parts = dateStr.split(/[\/\-\.]/);
   if (parts.length !== 3) return null;
 
-  let day, month, year;
+  let p1 = parseInt(parts[0], 10);
+  let p2 = parseInt(parts[1], 10);
+  let year = parseInt(parts[2], 10);
 
-  // Assume DD/MM/YYYY or DD/MM/YY format (common in many countries)
-  day = parseInt(parts[0]);
-  month = parseInt(parts[1]) - 1; // JS months are 0-based
-  year = parseInt(parts[2]);
+  if (isNaN(p1) || isNaN(p2) || isNaN(year)) return null;
 
-  // Handle 2-digit years
   if (year < 100) {
     year += year < 50 ? 2000 : 1900;
   }
 
-  const date = new Date(year, month, day);
-  if (isNaN(date.getTime())) return null;
+  const tryNormalize = (day, monthIndex) => {
+    if (monthIndex < 0 || monthIndex > 11 || day < 1 || day > 31) return null;
+    const candidate = new Date(year, monthIndex, day);
+    if (
+      candidate.getFullYear() === year &&
+      candidate.getMonth() === monthIndex &&
+      candidate.getDate() === day
+    ) {
+      return candidate.toISOString().split('T')[0];
+    }
+    return null;
+  };
 
-  // Format as YYYY-MM-DD
-  return date.toISOString().split('T')[0];
+  // Try DD/MM first, then MM/DD as fallback
+  return (
+    tryNormalize(p1, p2 - 1) ||
+    tryNormalize(p2, p1 - 1) ||
+    null
+  );
 }
 
 export default router;

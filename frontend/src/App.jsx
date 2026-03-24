@@ -13,7 +13,9 @@ function AuthLayout({ children, title }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-slate-900 dark:to-slate-800 p-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow p-6">
-        <h1 className="text-2xl font-bold text-center mb-4 dark:text-white">{title}</h1>
+        <h1 className="text-2xl font-bold text-center mb-4 dark:text-white">
+          {title}
+        </h1>
         {children}
       </div>
     </div>
@@ -242,5 +244,7 @@ function App() {
         <Route path="*" element={<div className="p-4">Not Found</div>} />
       </Routes>
     </>
+  );
+}
 
-      export default App;
+export default App;
