@@ -15,11 +15,13 @@ import ScanProduct from "./ScanProduct";
 
 function StatCard({ icon, label, value, color }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 flex items-center gap-3">
-      <div className={`text-3xl ${color}`}>{icon}</div>
-      <div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">{label}</p>
-        <p className="text-2xl font-bold dark:text-white">{value}</p>
+    <div className="card p-6 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-4">
+        <div className={`text-4xl ${color}`}>{icon}</div>
+        <div className="flex-1">
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{label}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+        </div>
       </div>
     </div>
   );
@@ -27,9 +29,9 @@ function StatCard({ icon, label, value, color }) {
 
 function AlertItem({ severity, title, time }) {
   const severityColors = {
-    critical: "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300",
-    warning: "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300",
-    info: "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300",
+    critical: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200",
+    warning: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200",
+    info: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200",
   };
   const severityIcons = {
     critical: "🔴",
@@ -39,13 +41,13 @@ function AlertItem({ severity, title, time }) {
 
   return (
     <div
-      className={`border-l-4 p-3 rounded ${severityColors[severity] || severityColors.info}`}
+      className={`border-l-4 p-4 rounded-lg ${severityColors[severity] || severityColors.info}`}
     >
-      <div className="flex items-start gap-2">
-        <span className="text-lg">{severityIcons[severity]}</span>
+      <div className="flex items-start gap-3">
+        <span className="text-lg mt-0.5">{severityIcons[severity]}</span>
         <div className="flex-1">
-          <p className="font-semibold text-sm dark:text-white">{title}</p>
-          <p className="text-xs opacity-75 dark:text-slate-300">{time}</p>
+          <p className="font-semibold text-sm">{title}</p>
+          <p className="text-xs opacity-75 mt-0.5">{time}</p>
         </div>
       </div>
     </div>
@@ -57,33 +59,35 @@ function ProductCard({ product }) {
   const expiry = new Date(product.expiry_date);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-  let statusColor = "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300";
+  let statusColor = "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
   let statusText = "Fresh";
 
   if (daysLeft <= 0) {
-    statusColor = "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300";
+    statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expired";
   } else if (daysLeft <= 3) {
-    statusColor = "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300";
+    statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expiring Soon";
   } else if (daysLeft <= 7) {
-    statusColor = "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300";
+    statusColor = "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300";
     statusText = "Expires Soon";
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-3 flex items-center justify-between">
-      <div className="flex-1">
-        <p className="font-semibold text-sm dark:text-white">{product.name}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{product.category}</p>
-        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-          {new Date(product.expiry_date).toLocaleDateString()}
-        </p>
-      </div>
-      <div
-        className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor}`}
-      >
-        {statusText}
+    <div className="card p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <p className="font-semibold text-sm text-slate-900 dark:text-white">{product.name}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{product.category}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+            Expires: {new Date(product.expiry_date).toLocaleDateString()}
+          </p>
+        </div>
+        <div
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ml-3 ${statusColor}`}
+        >
+          {statusText}
+        </div>
       </div>
     </div>
   );
@@ -93,19 +97,21 @@ function SimpleBarChart({ data, title }) {
   const maxValue = Math.max(...data.map((d) => d.value));
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-      <h3 className="font-semibold text-sm mb-4 dark:text-white">{title}</h3>
-      <div className="space-y-3">
+    <div className="card p-6">
+      <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-6">{title}</h3>
+      <div className="space-y-4">
         {data.map((item, idx) => (
           <div key={idx}>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">{item.label}</p>
-            <div className="bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm text-slate-700 dark:text-slate-300">{item.label}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.value} units</p>
+            </div>
+            <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
               <div
-                className="bg-green-500 h-full transition-all"
+                className="bg-indigo-600 dark:bg-indigo-500 h-full transition-all"
                 style={{ width: `${(item.value / maxValue) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{item.value} units</p>
           </div>
         ))}
       </div>
@@ -115,20 +121,20 @@ function SimpleBarChart({ data, title }) {
 
 function SimplePieChart({ data, title }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  const colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
+  const colors = ["#4f46e5", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-      <h3 className="font-semibold text-sm mb-4 dark:text-white">{title}</h3>
+    <div className="card p-6">
+      <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-6">{title}</h3>
       <div className="space-y-3">
         {data.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2">
+          <div key={idx} className="flex items-center gap-3">
             <div
-              className="w-3 h-3 rounded-full"
+              className="w-3 h-3 rounded-full flex-shrink-0"
               style={{ backgroundColor: colors[idx % colors.length] }}
             />
-            <p className="text-xs text-slate-600 dark:text-slate-400 flex-1">{item.label}</p>
-            <p className="text-xs font-semibold dark:text-white">
+            <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">{item.label}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
               {Math.round((item.value / total) * 100)}%
             </p>
           </div>
@@ -248,24 +254,23 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
-        <p className="text-slate-600 dark:text-slate-300">Loading dashboard...</p>
+      <div className="flex flex-col items-center justify-center min-h-96">
+        <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-600 dark:text-slate-400">Loading dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 pb-6 bg-white dark:bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 dark:from-indigo-900 dark:to-indigo-950 text-white rounded-lg p-4">
-        <h1 className="text-2xl font-bold">Dashboard Overview</h1>
-        <p className="text-indigo-100 dark:text-indigo-200 text-sm">
-          Monitor your product expiry dates and reduce food waste
-        </p>
+    <div className="space-y-8 pb-8">
+      {/* Header Section */}
+      <div>
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Dashboard</h1>
+        <p className="text-slate-600 dark:text-slate-400">Monitor and manage your product inventory</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           icon="🟢"
           label="Fresh Products"

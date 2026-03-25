@@ -11,12 +11,20 @@ import ProductList from "./components/ProductList";
 
 function AuthLayout({ children, title }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow p-6">
-        <h1 className="text-2xl font-bold text-center mb-4 dark:text-white">
-          {title}
-        </h1>
-        {children}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-900 px-4 py-8">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-600 text-white mb-4">
+            <span className="text-xl">📦</span>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+            ExpiryTracker
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400">{title}</p>
+        </div>
+        <div className="card p-8">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -52,112 +60,144 @@ function MainLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
-      {/* Mobile Header */}
-      <header className="bg-white dark:bg-slate-800 shadow sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden text-slate-600 dark:text-slate-300 text-xl"
-            >
-              ☰
-            </button>
-            <h1 className="font-bold text-lg dark:text-white">ExpiryTracker</h1>
+      {/* Header */}
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Top bar */}
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden text-slate-600 dark:text-slate-400 text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded"
+              >
+                ☰
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-lg">
+                  📦
+                </div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">ExpiryTracker</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                {user?.name}
+              </span>
+              <button
+                onClick={logout}
+                className="btn-secondary text-sm"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs md:text-sm text-slate-600 dark:text-slate-400">
-              {user?.name}
-            </span>
-            <button
-              onClick={logout}
-              className="px-2 md:px-3 py-1 md:py-2 bg-red-600 dark:bg-red-700 text-white rounded text-xs md:text-sm hover:bg-red-700 dark:hover:bg-red-800"
-            >
-              Logout
-            </button>
-          </div>
+
+          {/* Mobile Navigation */}
+          {sidebarOpen && (
+            <nav className="md:hidden pb-3 space-y-1 border-t border-slate-200 dark:border-slate-700 pt-3">
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  }`
+                }
+                onClick={() => setSidebarOpen(false)}
+              >
+                📊 Dashboard
+              </NavLink>
+              <NavLink
+                to="/scan"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  }`
+                }
+                onClick={() => setSidebarOpen(false)}
+              >
+                📷 Scan & Capture
+              </NavLink>
+              <NavLink
+                to="/products"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  }`
+                }
+                onClick={() => setSidebarOpen(false)}
+              >
+                📦 Products
+              </NavLink>
+              <NavLink
+                to="/analytics"
+                className={({ isActive }) =>
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  }`
+                }
+                onClick={() => setSidebarOpen(false)}
+              >
+                📈 Analytics
+              </NavLink>
+            </nav>
+          )}
         </div>
 
-        {/* Mobile Navigation */}
-        {sidebarOpen && (
-          <nav className="md:hidden bg-slate-50 dark:bg-slate-800 border-t dark:border-slate-700 p-2 space-y-1">
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
-              }
-              onClick={() => setSidebarOpen(false)}
-            >
-              📊 Dashboard
-            </NavLink>
-            <NavLink
-              to="/scan"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
-              }
-              onClick={() => setSidebarOpen(false)}
-            >
-              📷 Scan & Capture
-            </NavLink>
-            <NavLink
-              to="/products"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
-              }
-              onClick={() => setSidebarOpen(false)}
-            >
-              📦 Product List
-            </NavLink>
-            <NavLink
-              to="/analytics"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
-              }
-              onClick={() => setSidebarOpen(false)}
-            >
-              📈 Analytics & Reports
-            </NavLink>
-          </nav>
-        )}
-
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex border-t dark:border-slate-700 px-4 py-2 gap-1">
+        <nav className="hidden md:flex border-t border-slate-200 dark:border-slate-700 px-4 sm:px-6 lg:px-8">
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
+              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`
             }
           >
-            📊 Dashboard
+            Dashboard
           </NavLink>
           <NavLink
             to="/scan"
             className={({ isActive }) =>
-              `px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
+              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`
             }
           >
-            📷 Scan & Capture
+            Scan
           </NavLink>
           <NavLink
             to="/products"
             className={({ isActive }) =>
-              `px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
+              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`
             }
           >
-            📦 Product List
+            Products
           </NavLink>
           <NavLink
             to="/analytics"
             className={({ isActive }) =>
-              `px-3 py-2 rounded text-sm ${isActive ? "bg-indigo-600 text-white" : "hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-300"}`
+              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`
             }
           >
-            📈 Analytics & Reports
+            Analytics
           </NavLink>
         </nav>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-4 py-4">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
     </div>
