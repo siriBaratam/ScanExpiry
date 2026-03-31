@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { createWorker } from "tesseract.js";
 import { productsApi } from "../api/client";
 import AddProductForm from "./AddProductForm";
 
@@ -58,34 +57,85 @@ function ScanProduct({ onClose, onProductAdded }) {
     }
   };
 
+  const compressImage = (imageData) => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 800;
+        const maxHeight = 800;
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions maintaining aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+
+        // Start with 0.6 quality, reduce if still too large
+        let quality = 0.6;
+        let compressedData = canvas.toDataURL("image/jpeg", quality);
+
+        // If still too large (> 5MB base64), reduce quality further
+        while (compressedData.length > 5000000 && quality > 0.1) {
+          quality -= 0.1;
+          compressedData = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        // Final size check
+        const sizeInMB = (compressedData.length / 1048576).toFixed(2);
+        if (compressedData.length > 10000000) {
+          reject(
+            new Error(
+              `Image too large (${sizeInMB}MB). Please use a smaller image.`,
+            ),
+          );
+        } else if (compressedData.length > 5000000) {
+          console.warn(
+            `Large image (${sizeInMB}MB). Processing may take longer.`,
+          );
+          resolve(compressedData);
+        } else {
+          resolve(compressedData);
+        }
+      };
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+      img.src = imageData;
+    });
+  };
+
   const processImage = async (imageData) => {
     setStep("processing");
     setError("");
 
     try {
-      // Try backend OCR first, fallback to client-side
-      let parsedData;
-      try {
-        const response = await productsApi.ocr(imageData);
-        parsedData = response.parsedData;
-        parsedData.ocr_confidence = response.confidence ?? null;
-      } catch (backendError) {
-        console.warn("Backend OCR failed, using client-side:", backendError);
-        // Fallback to client-side OCR
-        const worker = await createWorker("eng");
-        await worker.setParameters({
-          tessedit_char_whitelist:
-            "0123456789/.-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ",
-        });
+      // Compress image before sending
+      const compressedImage = await compressImage(imageData);
 
-        const {
-          data: { text, confidence },
-        } = await worker.recognize(imageData);
-        await worker.terminate();
-        parsedData = parseOCRText(text);
-        parsedData.ocr_confidence = Number.isFinite(confidence)
-          ? Number(confidence.toFixed(2))
-          : null;
+      // Send to backend OCR
+      const response = await productsApi.ocr(compressedImage);
+      const parsedData = response.parsedData;
+      parsedData.ocr_confidence = response.confidence ?? null;
+
+      // Check if manual review is required
+      if (response.requiresManualReview) {
+        setError(
+          "Low confidence detected. Please review the extracted data carefully.",
+        );
       }
 
       setExtractedData(parsedData);
@@ -93,124 +143,11 @@ function ScanProduct({ onClose, onProductAdded }) {
     } catch (err) {
       console.error("OCR error:", err);
       setError(
-        "Failed to process image. Please try again or enter details manually.",
+        err.message ||
+          "Failed to process image. Please try again or enter details manually.",
       );
       setStep("capture");
     }
-  };
-
-  const parseOCRText = (text) => {
-    const data = {
-      name: "",
-      category: "",
-      expiry_date: "",
-      manufacture_date: "",
-      best_before_date: "",
-    };
-
-    const cleanText = text.toLowerCase().replace(/\s+/g, " ").trim();
-
-    const labeledDates = [
-      {
-        key: "expiry_date",
-        regex:
-          /(?:exp(?:iry)?|expires?|valid\s+till)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i,
-      },
-      {
-        key: "manufacture_date",
-        regex:
-          /(?:mfg|manufacture(?:d)?(?:\s+on)?)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i,
-      },
-      {
-        key: "best_before_date",
-        regex:
-          /best before[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i,
-      },
-    ];
-
-    for (const item of labeledDates) {
-      const match = text.match(item.regex);
-      if (match && match[1]) {
-        const normalizedDate = normalizeDate(match[1]);
-        if (normalizedDate) {
-          data[item.key] = normalizedDate;
-        }
-      }
-    }
-
-    if (!data.expiry_date) {
-      const genericDatePattern =
-        /([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/g;
-      let match;
-      while ((match = genericDatePattern.exec(text)) !== null) {
-        const normalizedDate = normalizeDate(match[1]);
-        if (normalizedDate) {
-          data.expiry_date = normalizedDate;
-          break;
-        }
-      }
-    }
-
-    const lines = text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 2);
-    if (lines.length > 0) {
-      data.name =
-        lines.find((line) => !/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(line)) ||
-        lines[0];
-    }
-
-    const categoryMap = [
-      { cat: "Dairy", terms: ["milk", "cheese", "yogurt", "butter"] },
-      { cat: "Bakery", terms: ["bread", "flour", "cake", "bun"] },
-      { cat: "Beverages", terms: ["soda", "juice", "water", "tea", "coffee"] },
-      { cat: "Meat", terms: ["chicken", "beef", "pork", "fish", "sausage"] },
-      {
-        cat: "Produce",
-        terms: ["apple", "banana", "orange", "tomato", "lettuce"],
-      },
-      { cat: "Snacks", terms: ["chips", "cookie", "cracker", "nuts"] },
-    ];
-
-    for (const item of categoryMap) {
-      if (item.terms.some((term) => cleanText.includes(term))) {
-        data.category = item.cat;
-        break;
-      }
-    }
-
-    return data;
-  };
-
-  const normalizeDate = (dateStr) => {
-    const parts = dateStr.split(/[\/\-\.]/);
-    if (parts.length !== 3) return null;
-
-    let p1 = parseInt(parts[0], 10);
-    let p2 = parseInt(parts[1], 10);
-    let year = parseInt(parts[2], 10);
-
-    if (isNaN(p1) || isNaN(p2) || isNaN(year)) return null;
-
-    if (year < 100) {
-      year += year < 50 ? 2000 : 1900;
-    }
-
-    const tryNormalize = (day, monthIndex) => {
-      if (monthIndex < 0 || monthIndex > 11 || day < 1 || day > 31) return null;
-      const candidate = new Date(year, monthIndex, day);
-      if (
-        candidate.getFullYear() === year &&
-        candidate.getMonth() === monthIndex &&
-        candidate.getDate() === day
-      ) {
-        return candidate.toISOString().split("T")[0];
-      }
-      return null;
-    };
-
-    return tryNormalize(p1, p2 - 1) || tryNormalize(p2, p1 - 1) || null;
   };
 
   const handleRetry = () => {
