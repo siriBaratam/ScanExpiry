@@ -22,9 +22,7 @@ function AuthLayout({ children, title }) {
           </h1>
           <p className="text-slate-600 dark:text-slate-400">{title}</p>
         </div>
-        <div className="card p-8">
-          {children}
-        </div>
+        <div className="card p-8">{children}</div>
       </div>
     </div>
   );
@@ -76,17 +74,16 @@ function MainLayout({ children }) {
                 <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-lg">
                   📦
                 </div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">ExpiryTracker</h1>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">
+                  ExpiryTracker
+                </h1>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-slate-600 dark:text-slate-400">
                 {user?.name}
               </span>
-              <button
-                onClick={logout}
-                className="btn-secondary text-sm"
-              >
+              <button onClick={logout} className="btn-secondary text-sm">
                 Logout
               </button>
             </div>
@@ -98,9 +95,10 @@ function MainLayout({ children }) {
               <NavLink
                 to="/dashboard"
                 className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                   }`
                 }
                 onClick={() => setSidebarOpen(false)}
@@ -108,40 +106,17 @@ function MainLayout({ children }) {
                 📊 Dashboard
               </NavLink>
               <NavLink
-                to="/scan"
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  }`
-                }
-                onClick={() => setSidebarOpen(false)}
-              >
-                📷 Scan & Capture
-              </NavLink>
-              <NavLink
                 to="/products"
                 className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                   }`
                 }
                 onClick={() => setSidebarOpen(false)}
               >
                 📦 Products
-              </NavLink>
-              <NavLink
-                to="/analytics"
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
-                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  }`
-                }
-                onClick={() => setSidebarOpen(false)}
-              >
-                📈 Analytics
               </NavLink>
             </nav>
           )}
@@ -152,46 +127,26 @@ function MainLayout({ children }) {
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                isActive
+                  ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                  : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`
             }
           >
             Dashboard
           </NavLink>
           <NavLink
-            to="/scan"
-            className={({ isActive }) =>
-              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`
-            }
-          >
-            Scan
-          </NavLink>
-          <NavLink
             to="/products"
             className={({ isActive }) =>
-              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                isActive
+                  ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                  : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`
             }
           >
             Products
-          </NavLink>
-          <NavLink
-            to="/analytics"
-            className={({ isActive }) =>
-              `px-4 py-3 text-sm font-medium border-b-2 transition-colors ${isActive
-                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`
-            }
-          >
-            Analytics
           </NavLink>
         </nav>
       </header>
@@ -212,30 +167,10 @@ function DashboardPage() {
   );
 }
 
-function Scan() {
-  return (
-    <MainLayout>
-      <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow dark:text-white">
-        Scan page placeholder (OCR + manual entry)
-      </div>
-    </MainLayout>
-  );
-}
-
 function ProductListPage() {
   return (
     <MainLayout>
       <ProductList />
-    </MainLayout>
-  );
-}
-
-function Analytics() {
-  return (
-    <MainLayout>
-      <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow dark:text-white">
-        Charts: expiry distribution, wastage metrics
-      </div>
     </MainLayout>
   );
 }
@@ -258,26 +193,10 @@ function App() {
           }
         />
         <Route
-          path="/scan"
-          element={
-            <ProtectedRoute>
-              <Scan />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/products"
           element={
             <ProtectedRoute>
               <ProductListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Analytics />
             </ProtectedRoute>
           }
         />
