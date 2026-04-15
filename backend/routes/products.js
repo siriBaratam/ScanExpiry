@@ -125,11 +125,11 @@ function parseOCRText(text) {
   // Clean text
   const cleanText = text.toLowerCase().replace(/\s+/g, ' ').trim();
 
-  // Look for labelled dates first with expanded regex patterns
+  // Look for labelled dates first with expanded regex patterns (handles line breaks and multiple spaces)
   const labeledDates = [
-    { key: 'expiry_date', regex: /(?:exp(?:iry)?|expires?|valid\s+till|use\s+by|consume\s+by)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
-    { key: 'manufacture_date', regex: /(?:mfg|manufacture(?:d)?(?:\s+on)?|made\s+on|produced)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
-    { key: 'best_before_date', regex: /(?:best\s+before|best\s+by)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
+    { key: 'expiry_date', regex: /(?:exp(?:iry)?(?:\s+date)?|expires?\s+on|valid\s+(?:till|until|through)|use\s+by|sell\s+by|consume\s+by|best\s+before(?:\s+end)?)[:\s\r\n]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
+    { key: 'manufacture_date', regex: /(?:mfg|manufacture(?:d)?(?:\s+on|\s+date)?|made\s+(?:on|date)|produced(?:\s+on)?|production\s+date|packed\s+on)[:\s\r\n]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
+    { key: 'best_before_date', regex: /(?:best\s+before(?:\s+end)?|best\s+by|bbd|bbd\s+date)[:\s\r\n]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i },
   ];
 
   for (const item of labeledDates) {
@@ -155,12 +155,28 @@ function parseOCRText(text) {
     }
   }
 
-  // Extract all unlabeled dates found in text
+  // Also try abbreviated month text format (e.g., "15 JAN 24")
+  if (!data.expiry_date) {
+    const abbrevDateMatch = text.match(/(\d{1,2})[-\/\s]+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[-\/\s]*(\d{2,4})/i);
+    if (abbrevDateMatch) {
+      const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+      const monthKey = abbrevDateMatch[2].toLowerCase().slice(0, 3);
+      let year = parseInt(abbrevDateMatch[3], 10);
+      if (year < 100) year += year <= 30 ? 2000 : 1900;
+      const candidate = new Date(year, months[monthKey], abbrevDateMatch[1]);
+      if (candidate.getFullYear() === year && candidate.getMonth() === months[monthKey]) {
+        data.expiry_date = candidate.toISOString().split('T')[0];
+      }
+    }
+  }
+
+  // Extract all unlabeled dates found in text with improved pattern matching
   const allDates = [];
-  const genericDatePattern = /([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/g;
+  const genericDatePattern = /\b(\d{1,2})[\/\-\.:\s]+(\d{1,2})[\/\-\.:\s]+(\d{2,4})\b/g;
   let match;
   while ((match = genericDatePattern.exec(text)) !== null) {
-    const normalizedDate = normalizeDate(match[1]);
+    const fullDate = `${match[1]}/${match[2]}/${match[3]}`;
+    const normalizedDate = normalizeDate(fullDate);
     if (normalizedDate && !allDates.includes(normalizedDate)) {
       allDates.push(normalizedDate);
     }
@@ -245,8 +261,8 @@ function parseOCRText(text) {
 
 // Helper function to normalize dates with extended format support
 function normalizeDate(dateStr) {
-  // Handle various date formats: DD/MM/YY, MM/DD/YY, DD-MM-YYYY, etc.
-  const parts = dateStr.split(/[\/\-\.]/);
+  // Handle various date formats: DD/MM/YY, MM/DD/YY, DD-MM-YYYY, spaces, colons, etc.
+  const parts = dateStr.split(/[\/\-\.\s:]+/).filter(p => p.length > 0);
   if (parts.length !== 3) return null;
 
   let p1 = parseInt(parts[0], 10);

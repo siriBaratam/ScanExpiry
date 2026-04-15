@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { productsApi } from "../api/client";
 import { useTheme } from "../context/ThemeContext";
 import { useNotification } from "../context/NotificationContext";
@@ -19,8 +20,12 @@ function StatCard({ icon, label, value, color }) {
       <div className="flex items-center gap-4">
         <div className={`text-4xl ${color}`}>{icon}</div>
         <div className="flex-1">
-          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{label}</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+            {label}
+          </p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+            {value}
+          </p>
         </div>
       </div>
     </div>
@@ -29,8 +34,10 @@ function StatCard({ icon, label, value, color }) {
 
 function AlertItem({ severity, title, time }) {
   const severityColors = {
-    critical: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200",
-    warning: "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200",
+    critical:
+      "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-900 dark:text-red-200",
+    warning:
+      "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200",
     info: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200",
   };
   const severityIcons = {
@@ -59,7 +66,8 @@ function ProductCard({ product }) {
   const expiry = new Date(product.expiry_date);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-  let statusColor = "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
+  let statusColor =
+    "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
   let statusText = "Fresh";
 
   if (daysLeft <= 0) {
@@ -69,7 +77,8 @@ function ProductCard({ product }) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expiring Soon";
   } else if (daysLeft <= 7) {
-    statusColor = "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300";
+    statusColor =
+      "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300";
     statusText = "Expires Soon";
   }
 
@@ -77,8 +86,12 @@ function ProductCard({ product }) {
     <div className="card p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="font-semibold text-sm text-slate-900 dark:text-white">{product.name}</p>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{product.category}</p>
+          <p className="font-semibold text-sm text-slate-900 dark:text-white">
+            {product.name}
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            {product.category}
+          </p>
           <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
             Expires: {new Date(product.expiry_date).toLocaleDateString()}
           </p>
@@ -98,13 +111,19 @@ function SimpleBarChart({ data, title }) {
 
   return (
     <div className="card p-6">
-      <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-6">{title}</h3>
+      <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-6">
+        {title}
+      </h3>
       <div className="space-y-4">
         {data.map((item, idx) => (
           <div key={idx}>
             <div className="flex justify-between items-center mb-2">
-              <p className="text-sm text-slate-700 dark:text-slate-300">{item.label}</p>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.value} units</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                {item.label}
+              </p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                {item.value} units
+              </p>
             </div>
             <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
               <div
@@ -125,7 +144,9 @@ function SimplePieChart({ data, title }) {
 
   return (
     <div className="card p-6">
-      <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-6">{title}</h3>
+      <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-6">
+        {title}
+      </h3>
       <div className="space-y-3">
         {data.map((item, idx) => (
           <div key={idx} className="flex items-center gap-3">
@@ -133,7 +154,9 @@ function SimplePieChart({ data, title }) {
               className="w-3 h-3 rounded-full flex-shrink-0"
               style={{ backgroundColor: colors[idx % colors.length] }}
             />
-            <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">{item.label}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">
+              {item.label}
+            </p>
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               {Math.round((item.value / total) * 100)}%
             </p>
@@ -151,7 +174,8 @@ function Dashboard() {
   const [showScanForm, setShowScanForm] = useState(false);
   const [exportFormat, setExportFormat] = useState("csv");
   const [alertTiming, setAlertTiming] = useState(7);
-  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] =
+    useState(false);
   const [generatedAlerts, setGeneratedAlerts] = useState([]);
   const { theme, setThemeMode } = useTheme();
   const { addNotification } = useNotification();
@@ -196,7 +220,22 @@ function Dashboard() {
       if (alerts.length > 0) {
         const criticalAlerts = alerts.filter((a) => a.severity === "critical");
         if (criticalAlerts.length > 0) {
-          const alertMessage = `⚠️ You have ${criticalAlerts.length} product(s) expiring soon!`;
+          const expiredCount = criticalAlerts.filter(
+            (a) => a.daysLeft <= 0,
+          ).length;
+          const expiringSoonCount = criticalAlerts.filter(
+            (a) => a.daysLeft > 0,
+          ).length;
+
+          let alertMessage = "⚠️ ";
+          if (expiredCount > 0 && expiringSoonCount > 0) {
+            alertMessage += `You have ${expiredCount} expired and ${expiringSoonCount} expiring soon product(s)!`;
+          } else if (expiredCount > 0) {
+            alertMessage += `You have ${expiredCount} expired product(s)!`;
+          } else {
+            alertMessage += `You have ${expiringSoonCount} product(s) expiring soon!`;
+          }
+
           addNotification(alertMessage, "critical", 6000);
 
           // Send browser notifications if enabled
@@ -256,7 +295,9 @@ function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-96">
         <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-600 dark:text-slate-400">Loading dashboard...</p>
+        <p className="text-slate-600 dark:text-slate-400">
+          Loading dashboard...
+        </p>
       </div>
     );
   }
@@ -265,8 +306,12 @@ function Dashboard() {
     <div className="space-y-8 pb-8">
       {/* Header Section */}
       <div>
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Dashboard</h1>
-        <p className="text-slate-600 dark:text-slate-400">Monitor and manage your product inventory</p>
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+          Dashboard
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
+          Monitor and manage your product inventory
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -301,7 +346,9 @@ function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 text-center">
           <div className="text-4xl mb-2">📷</div>
-          <h3 className="font-semibold text-sm dark:text-white">Scan Product</h3>
+          <h3 className="font-semibold text-sm dark:text-white">
+            Scan Product
+          </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 my-2">
             Use camera to scan barcode or expiry date
           </p>
@@ -314,7 +361,9 @@ function Dashboard() {
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 text-center">
           <div className="text-4xl mb-2">✏️</div>
-          <h3 className="font-semibold text-sm dark:text-white">Manual Entry</h3>
+          <h3 className="font-semibold text-sm dark:text-white">
+            Manual Entry
+          </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 my-2">
             Add product details manually
           </p>
@@ -329,17 +378,31 @@ function Dashboard() {
 
       {/* Alerts */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-        <h2 className="font-semibold text-sm mb-3 dark:text-white">🔔 Expiry Alerts ({generatedAlerts.length})</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-sm dark:text-white">
+            🔔 Expiry Alerts ({generatedAlerts.length})
+          </h2>
+          {generatedAlerts.length > 4 && (
+            <Link
+              to="/products?filter=alerts"
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-300 hover:underline"
+            >
+              View All
+            </Link>
+          )}
+        </div>
         <div className="space-y-2">
           {generatedAlerts.length > 0 ? (
-            generatedAlerts.slice(0, 5).map((alert) => (
-              <AlertItem
-                key={alert.id}
-                severity={alert.severity}
-                title={alert.title}
-                time={`${alert.daysLeft} days left`}
-              />
-            ))
+            generatedAlerts
+              .slice(0, 4)
+              .map((alert) => (
+                <AlertItem
+                  key={alert.id}
+                  severity={alert.severity}
+                  title={alert.title}
+                  time={`${alert.daysLeft} days left`}
+                />
+              ))
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
               ✅ All products are fresh! No alerts at this time.
@@ -350,7 +413,9 @@ function Dashboard() {
 
       {/* Quick Settings */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-        <h2 className="font-semibold text-sm mb-3 dark:text-white">⚙️ Quick Settings</h2>
+        <h2 className="font-semibold text-sm mb-3 dark:text-white">
+          ⚙️ Quick Settings
+        </h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm dark:text-white">Alert Timing</span>
@@ -393,8 +458,13 @@ function Dashboard() {
       {/* Recent Products */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="font-semibold text-sm dark:text-white">📦 Recent Products</h2>
-          <a href="/products" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+          <h2 className="font-semibold text-sm dark:text-white">
+            📦 Recent Products
+          </h2>
+          <a
+            href="/products"
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          >
             View All
           </a>
         </div>
@@ -446,7 +516,13 @@ function Dashboard() {
                 { label: "Snacks", value: 18 },
                 { label: "Vegetables", value: 12 },
               ];
-              await exportReport(stats, products, wastageData, categoryData, exportFormat);
+              await exportReport(
+                stats,
+                products,
+                wastageData,
+                categoryData,
+                exportFormat,
+              );
             }}
             className="bg-blue-600 dark:bg-blue-700 text-white px-6 py-2 rounded font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-800"
           >

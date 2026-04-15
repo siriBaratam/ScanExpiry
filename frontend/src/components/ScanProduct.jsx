@@ -5,6 +5,7 @@ import AddProductForm from "./AddProductForm";
 function ScanProduct({ onClose, onProductAdded }) {
   const [step, setStep] = useState("capture"); // capture, processing, review
   const [image, setImage] = useState(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [extractedData, setExtractedData] = useState({});
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
@@ -19,7 +20,9 @@ function ScanProduct({ onClose, onProductAdded }) {
       });
       videoRef.current.srcObject = stream;
       streamRef.current = stream;
-      videoRef.current.play();
+      await videoRef.current.play();
+      setIsCameraOpen(true);
+      setError("");
     } catch (err) {
       setError("Camera access denied or not available");
       console.error("Camera error:", err);
@@ -31,15 +34,25 @@ function ScanProduct({ onClose, onProductAdded }) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    setIsCameraOpen(false);
   };
 
   const captureImage = () => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    const imageData = canvas.toDataURL("image/jpeg");
+    const width = video.videoWidth || video.clientWidth || 640;
+    const height = video.videoHeight || video.clientHeight || 480;
+
+    if (!width || !height) {
+      setError("Camera frame is not ready yet. Please try again.");
+      return;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, width, height);
+    const imageData = canvas.toDataURL("image/jpeg", 0.92);
     setImage(imageData);
     stopCamera();
     processImage(imageData);
@@ -151,6 +164,7 @@ function ScanProduct({ onClose, onProductAdded }) {
   };
 
   const handleRetry = () => {
+    stopCamera();
     setImage(null);
     setExtractedData({});
     setError("");
@@ -203,7 +217,9 @@ function ScanProduct({ onClose, onProductAdded }) {
               <video
                 ref={videoRef}
                 className="w-full h-64 bg-gray-200 rounded-lg object-cover"
-                style={{ display: image ? "none" : "block" }}
+                style={{ display: isCameraOpen && !image ? "block" : "none" }}
+                autoPlay
+                playsInline
               />
               {image && (
                 <img
@@ -212,12 +228,17 @@ function ScanProduct({ onClose, onProductAdded }) {
                   className="w-full h-64 bg-gray-200 rounded-lg object-cover"
                 />
               )}
+              {!isCameraOpen && !image && (
+                <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+                  Click "Open Camera" to start
+                </div>
+              )}
               <canvas ref={canvasRef} className="hidden" />
             </div>
 
             {/* Controls */}
             <div className="flex gap-2">
-              {!image ? (
+              {!isCameraOpen && !image ? (
                 <>
                   <button
                     onClick={startCamera}
@@ -239,6 +260,24 @@ function ScanProduct({ onClose, onProductAdded }) {
                     className="hidden"
                   />
                 </>
+              ) : isCameraOpen && !image ? (
+                <>
+                  <button
+                    onClick={captureImage}
+                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded font-semibold hover:bg-green-700"
+                  >
+                    📸 Capture
+                  </button>
+                  <button
+                    onClick={() => {
+                      stopCamera();
+                      setError("");
+                    }}
+                    className="flex-1 bg-gray-600 text-white py-2 px-4 rounded font-semibold hover:bg-gray-700"
+                  >
+                    ❌ Close Camera
+                  </button>
+                </>
               ) : (
                 <>
                   <button
@@ -251,7 +290,7 @@ function ScanProduct({ onClose, onProductAdded }) {
                     onClick={captureImage}
                     className="flex-1 bg-green-600 text-white py-2 px-4 rounded font-semibold hover:bg-green-700"
                   >
-                    📸 Capture
+                    ✅ Use Image
                   </button>
                 </>
               )}

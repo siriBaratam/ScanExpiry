@@ -6,9 +6,9 @@ export async function getOCRWorker() {
   if (!workerInstance) {
     workerInstance = await createWorker('eng');
     await workerInstance.setParameters({
-      tessedit_char_whitelist: '0123456789/.-:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ()&,;™®',
+      tessedit_char_whitelist: '0123456789/.-:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ()&,;™®\n',
       tesseract_create_pdf: '0',
-      tessedit_pageseg_mode: 6, // Assume single column of text
+      tessedit_pageseg_mode: 3, // Fully automatic page segmentation (better for product labels)
     });
   }
   return workerInstance;

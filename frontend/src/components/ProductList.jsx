@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { productsApi } from "../api/client";
 import AddProductForm from "./AddProductForm";
 import ScanProduct from "./ScanProduct";
@@ -8,7 +9,8 @@ function ProductCard({ product }) {
   const expiry = new Date(product.expiry_date);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-  let statusColor = "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
+  let statusColor =
+    "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
   let statusText = "Fresh";
   if (daysLeft <= 0) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
@@ -17,7 +19,8 @@ function ProductCard({ product }) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expiring Soon";
   } else if (daysLeft <= 7) {
-    statusColor = "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300";
+    statusColor =
+      "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300";
     statusText = "Expires Soon";
   }
 
@@ -25,13 +28,19 @@ function ProductCard({ product }) {
     <div className="card p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="font-semibold text-slate-900 dark:text-white">{product.name}</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{product.category}</p>
+          <p className="font-semibold text-slate-900 dark:text-white">
+            {product.name}
+          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            {product.category}
+          </p>
           <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
             Expires: {new Date(product.expiry_date).toLocaleDateString()}
           </p>
         </div>
-        <div className={`px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ml-3 ${statusColor}`}>
+        <div
+          className={`px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ml-3 ${statusColor}`}
+        >
           {statusText}
         </div>
       </div>
@@ -40,6 +49,7 @@ function ProductCard({ product }) {
 }
 
 function ProductList() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +73,13 @@ function ProductList() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    const filterParam = searchParams.get("filter");
+    if (filterParam === "alerts") {
+      setFilterStatus("alerts");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let filtered = products;
@@ -90,6 +107,8 @@ function ProductList() {
             return daysLeft > 0 && daysLeft <= 7;
           case "expired":
             return daysLeft <= 0;
+          case "alerts":
+            return daysLeft <= 7;
           default:
             return true;
         }
@@ -103,7 +122,9 @@ function ProductList() {
     return (
       <div className="flex flex-col items-center justify-center min-h-96">
         <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-600 dark:text-slate-400">Loading products...</p>
+        <p className="text-slate-600 dark:text-slate-400">
+          Loading products...
+        </p>
       </div>
     );
   }
@@ -112,8 +133,12 @@ function ProductList() {
     <div className="space-y-8 pb-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Products</h1>
-        <p className="text-slate-600 dark:text-slate-400">Manage and track all your product inventory</p>
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+          Products
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
+          Manage and track all your product inventory
+        </p>
       </div>
 
       {/* Controls */}
@@ -121,7 +146,9 @@ function ProductList() {
         <div className="flex flex-col lg:flex-row gap-4 items-end justify-between">
           <div className="flex flex-col md:flex-row gap-3 flex-1 w-full">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Search</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Search
+              </label>
               <input
                 type="text"
                 placeholder="Search by name or category..."
@@ -131,7 +158,9 @@ function ProductList() {
               />
             </div>
             <div className="flex-shrink-0 md:pt-7">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Filter</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Filter
+              </label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -141,6 +170,7 @@ function ProductList() {
                 <option value="fresh">Fresh</option>
                 <option value="expiring-soon">Expiring Soon</option>
                 <option value="expired">Expired</option>
+                <option value="alerts">Expiry Alerts</option>
               </select>
             </div>
           </div>
@@ -165,7 +195,9 @@ function ProductList() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {filteredProducts.length === 0 ? "Products" : `${filteredProducts.length} Product${filteredProducts.length !== 1 ? 's' : ''}`}
+            {filteredProducts.length === 0
+              ? "Products"
+              : `${filteredProducts.length} Product${filteredProducts.length !== 1 ? "s" : ""}`}
           </h2>
         </div>
         <div className="grid grid-cols-1 gap-3">
