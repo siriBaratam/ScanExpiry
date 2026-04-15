@@ -70,9 +70,12 @@ function ProductCard({ product }) {
     "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
   let statusText = "Fresh";
 
-  if (daysLeft <= 0) {
+  if (daysLeft < 0) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expired";
+  } else if (daysLeft === 0) {
+    statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
+    statusText = "Expires Today";
   } else if (daysLeft <= 3) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expiring Soon";
@@ -173,7 +176,10 @@ function Dashboard() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showScanForm, setShowScanForm] = useState(false);
   const [exportFormat, setExportFormat] = useState("csv");
-  const [alertTiming, setAlertTiming] = useState(7);
+  const [alertTiming, setAlertTiming] = useState(() => {
+    const saved = localStorage.getItem("alertTiming");
+    return saved ? parseInt(saved) : 7;
+  });
   const [pushNotificationsEnabled, setPushNotificationsEnabled] =
     useState(false);
   const [generatedAlerts, setGeneratedAlerts] = useState([]);
@@ -200,8 +206,8 @@ function Dashboard() {
         const expiry = new Date(p.expiry_date);
         const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-        if (daysLeft <= 0) expired++;
-        else if (daysLeft <= 7) soon++;
+        if (daysLeft < 0) expired++;
+        else if (daysLeft <= alertTiming) soon++;
         else fresh++;
       });
 
@@ -221,10 +227,10 @@ function Dashboard() {
         const criticalAlerts = alerts.filter((a) => a.severity === "critical");
         if (criticalAlerts.length > 0) {
           const expiredCount = criticalAlerts.filter(
-            (a) => a.daysLeft <= 0,
+            (a) => a.daysLeft < 0,
           ).length;
-          const expiringSoonCount = criticalAlerts.filter(
-            (a) => a.daysLeft > 0,
+          const expiringSoonCount = alerts.filter(
+            (a) => a.severity === "warning" && a.daysLeft >= 0 && a.daysLeft <= alertTiming,
           ).length;
 
           let alertMessage = "⚠️ ";
@@ -256,6 +262,11 @@ function Dashboard() {
 
   useEffect(() => {
     loadProducts();
+  }, [alertTiming]);
+
+  // Save alert timing to localStorage
+  useEffect(() => {
+    localStorage.setItem("alertTiming", alertTiming.toString());
   }, [alertTiming]);
 
   // Request notification permission
@@ -400,7 +411,11 @@ function Dashboard() {
                   key={alert.id}
                   severity={alert.severity}
                   title={alert.title}
-                  time={`${alert.daysLeft} days left`}
+                  time={
+                    alert.daysLeft < 0
+                      ? `Expired ${Math.abs(alert.daysLeft)} days ago`
+                      : `${alert.daysLeft} days left`
+                  }
                 />
               ))
           ) : (

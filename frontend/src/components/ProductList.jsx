@@ -12,9 +12,12 @@ function ProductCard({ product }) {
   let statusColor =
     "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300";
   let statusText = "Fresh";
-  if (daysLeft <= 0) {
+  if (daysLeft < 0) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expired";
+  } else if (daysLeft === 0) {
+    statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
+    statusText = "Expires Today";
   } else if (daysLeft <= 3) {
     statusColor = "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
     statusText = "Expiring Soon";
@@ -103,12 +106,21 @@ function ProductList() {
         switch (filterStatus) {
           case "fresh":
             return daysLeft > 7;
-          case "expiring-soon":
-            return daysLeft > 0 && daysLeft <= 7;
+          case "expiring-soon": {
+            const alertTiming = parseInt(
+              localStorage.getItem("alertTiming") || "7",
+            );
+            return daysLeft >= 0 && daysLeft <= alertTiming;
+          }
           case "expired":
-            return daysLeft <= 0;
-          case "alerts":
-            return daysLeft <= 7;
+            return daysLeft < 0;
+          case "alerts": {
+            // Use the user's alert timing setting from localStorage
+            const alertTiming = parseInt(
+              localStorage.getItem("alertTiming") || "7",
+            );
+            return Math.abs(daysLeft) <= alertTiming;
+          }
           default:
             return true;
         }

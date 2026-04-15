@@ -21,40 +21,36 @@ export const generateAlertsFromProducts = (products, alertTimingDays = 7) => {
         const daysLeft = calculateDaysUntilExpiry(product.expiry_date);
 
         // Only generate alerts for products within the alert timing window
-        if (daysLeft <= alertTimingDays && daysLeft > -1) {
+        // Include both expired products (within timing window) and expiring products
+        if (Math.abs(daysLeft) <= alertTimingDays) {
             let alertTitle = "";
             let severity = "info";
 
-            if (daysLeft === 0) {
-                alertTitle = `${product.name} expires today`;
+            if (daysLeft < 0) {
+                // Expired products are always critical
+                alertTitle = `${product.name} is expired`;
                 severity = "critical";
+            } else if (daysLeft === 0) {
+                alertTitle = `${product.name} expires today`;
+                severity = "warning";
             } else if (daysLeft === 1) {
                 alertTitle = `${product.name} expires tomorrow`;
-                severity = "critical";
-            } else if (daysLeft <= 3) {
+                severity = "warning";
+            } else if (daysLeft <= Math.min(3, alertTimingDays)) {
+                // Critical if within 3 days OR within user's alert timing (whichever is smaller)
                 alertTitle = `${product.name} expires in ${daysLeft} days`;
                 severity = "critical";
             } else {
+                // Warning for products expiring within alert timing but beyond 3 days
                 alertTitle = `${product.name} expires in ${daysLeft} days`;
                 severity = "warning";
             }
 
             alerts.push({
-                id: `${product.id}-${daysLeft}`,
+                id: `${product.id}-${daysLeft < 0 ? 'expired' : daysLeft}`,
                 productId: product.id,
                 title: alertTitle,
                 severity,
-                daysLeft,
-                expiryDate: product.expiry_date,
-                category: product.category,
-            });
-        } else if (daysLeft < 0) {
-            // Add expired products as critical
-            alerts.push({
-                id: `${product.id}-expired`,
-                productId: product.id,
-                title: `${product.name} is expired`,
-                severity: "critical",
                 daysLeft,
                 expiryDate: product.expiry_date,
                 category: product.category,
