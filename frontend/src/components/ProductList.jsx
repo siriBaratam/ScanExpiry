@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { productsApi } from "../api/client";
+import { useNotification } from "../context/NotificationContext";
 import AddProductForm from "./AddProductForm";
 import ScanProduct from "./ScanProduct";
 
-function ProductCard({ product }) {
+function ProductCard({ product, onDelete }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { addNotification } = useNotification();
+
   const today = new Date();
   const expiry = new Date(product.expiry_date);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
@@ -27,27 +32,84 @@ function ProductCard({ product }) {
     statusText = "Expires Soon";
   }
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await productsApi.delete(product.id);
+      addNotification(`${product.name} deleted successfully`, "success");
+      onDelete(product.id);
+      setShowDeleteConfirm(false);
+    } catch (err) {
+      addNotification(`Failed to delete product: ${err.message}`, "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="card p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="font-semibold text-slate-900 dark:text-white">
-            {product.name}
-          </p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            {product.category}
-          </p>
-          <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
-            Expires: {new Date(product.expiry_date).toLocaleDateString()}
-          </p>
-        </div>
-        <div
-          className={`px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ml-3 ${statusColor}`}
-        >
-          {statusText}
+    <>
+      <div className="card p-4 hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="font-semibold text-slate-900 dark:text-white">
+              {product.name}
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              {product.category}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
+              Expires: {new Date(product.expiry_date).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 ml-3">
+            <div
+              className={`px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ${statusColor}`}
+            >
+              {statusText}
+            </div>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isDeleting}
+              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Delete product"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Delete Product
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Are you sure you want to delete <strong>{product.name}</strong>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -60,6 +122,21 @@ function ProductList() {
   const [showScanForm, setShowScanForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [alertTiming, setAlertTiming] = useState(() => {
+    const saved = localStorage.getItem("alertTiming");
+    return saved ? parseInt(saved) : 7;
+  });
+
+  // Listen for alert timing changes
+  useEffect(() => {
+    const handleAlertTimingChange = (event) => {
+      setAlertTiming(event.detail);
+    };
+
+    window.addEventListener("alertTimingChanged", handleAlertTimingChange);
+    return () =>
+      window.removeEventListener("alertTimingChanged", handleAlertTimingChange);
+  }, []);
 
   const loadProducts = async () => {
     try {
@@ -71,6 +148,11 @@ function ProductList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteProduct = (productId) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+    setFilteredProducts((prev) => prev.filter((p) => p.id !== productId));
   };
 
   useEffect(() => {
@@ -107,18 +189,11 @@ function ProductList() {
           case "fresh":
             return daysLeft > 7;
           case "expiring-soon": {
-            const alertTiming = parseInt(
-              localStorage.getItem("alertTiming") || "7",
-            );
             return daysLeft >= 0 && daysLeft <= alertTiming;
           }
           case "expired":
             return daysLeft < 0;
           case "alerts": {
-            // Use the user's alert timing setting from localStorage
-            const alertTiming = parseInt(
-              localStorage.getItem("alertTiming") || "7",
-            );
             return Math.abs(daysLeft) <= alertTiming;
           }
           default:
@@ -128,7 +203,7 @@ function ProductList() {
     }
 
     setFilteredProducts(filtered);
-  }, [products, searchTerm, filterStatus]);
+  }, [products, searchTerm, filterStatus, alertTiming]);
 
   if (loading) {
     return (
@@ -214,7 +289,13 @@ function ProductList() {
         </div>
         <div className="grid grid-cols-1 gap-3">
           {filteredProducts.length > 0 ? (
-            filteredProducts.map((p) => <ProductCard key={p.id} product={p} />)
+            filteredProducts.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                onDelete={handleDeleteProduct}
+              />
+            ))
           ) : (
             <div className="card p-12 text-center">
               <p className="text-2xl mb-2">📦</p>

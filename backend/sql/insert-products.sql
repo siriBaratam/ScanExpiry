@@ -1,0 +1,79 @@
+-- Insert 10 real products into the products table
+-- User ID 1 should exist (from sample data initialization)
+INSERT INTO products (
+        name,
+        category,
+        expiry_date,
+        purchase_date,
+        user_id
+    )
+VALUES (
+        'Whole Milk 1L',
+        'Dairy',
+        '2026-05-15',
+        '2026-04-25',
+        1
+    ),
+    (
+        'Whole Wheat Bread',
+        'Bakery',
+        '2026-05-02',
+        '2026-04-28',
+        1
+    ),
+    (
+        'Greek Yogurt 500g',
+        'Dairy',
+        '2026-05-20',
+        '2026-04-26',
+        1
+    ),
+    (
+        'Cheddar Cheese Block',
+        'Dairy',
+        '2026-06-30',
+        '2026-04-20',
+        1
+    ),
+    (
+        'Orange Juice 2L',
+        'Beverages',
+        '2026-05-10',
+        '2026-04-27',
+        1
+    ),
+    (
+        'Free Range Eggs Dozen',
+        'Eggs',
+        '2026-05-15',
+        '2026-04-24',
+        1
+    ),
+    (
+        'Chicken Breast 500g',
+        'Meat',
+        '2026-05-03',
+        '2026-04-29',
+        1
+    ),
+    (
+        'Cherry Tomatoes 500g',
+        'Vegetables',
+        '2026-05-05',
+        '2026-04-28',
+        1
+    ),
+    (
+        'Butter Unsalted',
+        'Dairy',
+        '2026-07-15',
+        '2026-04-22',
+        1
+    ),
+    (
+        'Romaine Lettuce',
+        'Vegetables',
+        '2026-05-02',
+        '2026-04-29',
+        1
+    );

@@ -230,7 +230,10 @@ function Dashboard() {
             (a) => a.daysLeft < 0,
           ).length;
           const expiringSoonCount = alerts.filter(
-            (a) => a.severity === "warning" && a.daysLeft >= 0 && a.daysLeft <= alertTiming,
+            (a) =>
+              a.severity === "warning" &&
+              a.daysLeft >= 0 &&
+              a.daysLeft <= alertTiming,
           ).length;
 
           let alertMessage = "⚠️ ";
@@ -267,6 +270,10 @@ function Dashboard() {
   // Save alert timing to localStorage
   useEffect(() => {
     localStorage.setItem("alertTiming", alertTiming.toString());
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(
+      new CustomEvent("alertTimingChanged", { detail: alertTiming }),
+    );
   }, [alertTiming]);
 
   // Request notification permission
