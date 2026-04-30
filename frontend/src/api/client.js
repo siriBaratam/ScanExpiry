@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 export async function apiCall(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
